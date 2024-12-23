@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Movie</title>
+</head>
+<body>
+    <form action="/add" method="post">
+        {{ form.csrf_token }}
+        {{ form.name.label }}
+        {{ form.name }}
+        {{ form.submit }}
+    </form>
+    
+    
+</body>
+</html>

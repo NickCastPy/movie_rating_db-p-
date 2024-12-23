@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, Float
 from flask_login import login_required, login_user, logout_user, UserMixin, current_user, LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
+from forms import FindMovieForm, LoginForm, SignUpForm, PostCommentForm
 from flask_ckeditor import CKEditor
 from os import getenv
 from datetime import date
@@ -46,8 +47,10 @@ class Movie(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     year: Mapped[int] = mapped_column(Integer, nullable=False)
+    img_url: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    contributor_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('users.id'), nullable=False)
+    contributor: Mapped["User"] = relationship("User", back_populates="movies_added")
     comments: Mapped[str] = relationship('Comment', back_populates='parent_movie')
     
     @property
@@ -73,8 +76,42 @@ with app.app_context():
 # ROUTES
 
 @app.route("/")
-def render_main():
-    return "<h1>Wow</h1>"
+def home():
+    movies = db.session.execute(db.select(Movie)).scalars()
+    return render_template('index.html', movies=movies)
+
+@app.route("/add", methods=["POST", "GET"])
+def add_movie():
+    find_movie_form = FindMovieForm()
+    if request.method=="POST" and find_movie_form.validate_on_submit():
+        title = find_movie_form.name.data
+        response = requests.get(API_SEARCH_URL, params={"api_key": API_KEY, "query":title})
+        data = response.json()["results"]
+        return render_template("find_movie.html", data=data)
+    return render_template("add_movie.html", form=find_movie_form)
+
+@app.route("/select", methods=["POST", "GET"])
+def select():
+    movie_api_id = request.args.get('id')
+    movie_api_url = f"{MOVIE_DB_INFO_URL}/{movie_api_id}"
+    response = requests.get(movie_api_url, params={"api_key": API_KEY, "language": "en-US"})
+    data = response.json()
+    new_movie = Movie(
+        title=data["title"],
+        year=data["release_date"].split("-")[0],
+        img_url=f"{MOVIE_DB_IMAGE_URL}{data['poster_path']}",
+        description=data["overview"]
+    )
+    db.session.add(new_movie)
+    db.session.commit()
+    return redirect('/')
+
+@app.route('/delete/<movie_id>')
+def delete(movie_id):
+    selected_movie = db.session.execute(db.select('Movie').where(Movie.id==movie_id)).scalar()
+    db.session.delete(selected_movie)
+    db.session.commit()
+    return redirect("/")
 
 if __name__=="__main__":
     app.run(debug=True, port=5004)

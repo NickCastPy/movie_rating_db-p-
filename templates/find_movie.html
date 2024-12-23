@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movies DB</title>
+    <title>Find</title>
 </head>
 <body>
-    <h1>IMDB Clone</h1>
-    {%for movie in movies %}
-    <h1>{{movie.title}}</h1>
+    {%for movie in data%}
+    <a href="{{url_for('select', id=movie['id'])}}">{{movie['original_title']}}</a><br>
     {%endfor%}
 </body>
 </html>
