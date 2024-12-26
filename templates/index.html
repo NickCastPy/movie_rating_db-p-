@@ -4,11 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movies DB</title>
+    <link rel="stylesheet" href="{{url_for(('static'), filename='styles.css')}}">
 </head>
 <body>
+    <ul>
+        {%if current_user.is_authenticated%}
+        <li>
+            <a href="{{url_for('logout')}}">Logout</a>
+        </li>
+        <li>
+            <a href="{{url_for('add_movie')}}">Add Movie</a>
+        </li>
+        {%else%}
+        <li>
+            <a href="{{url_for('signup')}}">Sign Up</a>
+        </li>
+        <li>
+            <a href="{{url_for('login')}}">Login</a>
+        </li>
+        <p>You must be logged in to add a movie.</p>
+        {%endif%}
+    </ul>
     <h1>IMDB Clone</h1>
-    {%for movie in movies %}
-    <h1>{{movie.title}}</h1>
-    {%endfor%}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul>
+      {% for category, message in messages %}
+        <li style="color:red">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+    {%if movies != []%}
+    {% for movie in movies %}
+    
+    <div class="card" >
+      <div class="front" style="background-image: url('{{movie.img_url}}');">
+          <p class="large">{{movie.ranking}}</p>
+      </div>
+      <div class="back">
+        <div>
+      <div class="title">{{movie.title}} <span class="release_date">({{movie.year}})</span></div>
+          <div class="rating">
+              <label>{{movie.rating}}</label>
+            <i class="fas fa-star star"></i>
+          </div>
+            <p class="review">"{{movie.review}}"</p>
+          <p class="overview">
+            {{movie.description}}
+          </p>
+          <a href="{{url_for('movie', movie_id=movie.id)}}" class="button">Read More</a>
+
+          <a href="{{url_for('delete', movie_id=movie.id)}}" class="button delete-button">Delete</a>
+
+        </div>
+      </div>
+    </div>
+  {%endfor%}
+    {%else%}
+    <h1>No movies to show!</h1>
+    {%endif%}
 </body>
 </html>

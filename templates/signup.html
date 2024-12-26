@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find Your Movie</title>
+    <title>Sign Up</title>
     <link rel="stylesheet" href="{{url_for(('static'), filename='styles.css')}}">
 
 </head>
@@ -13,16 +13,19 @@
             <a href="{{url_for('home')}}">Home</a>
         </li>
         <li>
-            <a href="{{url_for('logout')}}">Logout</a>
+            <a href="{{url_for('login')}}">Login</a>
         </li>
     </ul>
-    <form action="/add" method="post">
+    <h1>Sign Up</h1>
+    <form action="/signup" method="post">
         {{ form.csrf_token }}
-        {{ form.name.label }}
-        {{ form.name }}
-        {{ form.submit }}
+        {{form.name.label}}
+        {{form.name}}
+        {{form.email.label}}
+        {{form.email}}
+        {{form.password.label}}
+        {{form.password}}
+        {{form.submit}}
     </form>
-    
-    
 </body>
 </html>

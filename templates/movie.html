@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ movie.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <ul>
+        <li>
+            <a href="{{url_for('home')}}">Home</a>
+        </li>
+        <li>
+            <a href="{{url_for('logout')}}">Logout</a>
+        </li>
+    </ul>
+    <div class="movie-container">
+        <!-- Movie Details -->
+        <div class="movie-details">
+            <img src="{{ movie.img_url }}" alt="{{ movie.title }} Poster" class="movie-poster">
+            <div class="movie-info">
+                <h1>{{ movie.title }} <span class="release-date">({{ movie.year }})</span></h1>
+                <p class="rating">Rating: <strong>{{ movie.average_rating }}</strong> <i class="fas fa-star star"></i></p>
+                <p class="overview">{{ movie.description }}</p>
+                <p class="review">"<em>{{ movie.review }}</em>"</p>
+            </div>
+        </div>
+
+        <!-- Comment Section -->
+        <div class="comment-section">
+            <h2>Comments</h2>
+            {% for comment in movie.comments %}
+                <div class="comment">
+                    <p class="comment-text">{{ comment.text }}</p>
+                    <p class="comment-meta">By {{ comment.comment_author.name }} | Rated: {{ comment.rating }}/10</p>
+                </div>
+                {%if current_user.id == comment.author_id%}
+                <a href="{{url_for('delete_comment', comment_id=comment.id)}}" class="button delete-button">Delete</a>
+                {%endif%}
+            {% endfor %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul>
+      {% for category, message in messages %}
+        <li style="color:red">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+            <!-- Add New Comment -->
+            {% if current_user.is_authenticated %}
+                <form action="" method="POST" class="comment-form">
+                    {{ form.hidden_tag() }}
+                    <textarea name="text" placeholder="Write your comment here..." required></textarea>
+                    <label for="rating">Your Rating:</label>
+                    <input type="number" name="rating" min="1" max="10" step="1" required>
+                    <button type="submit" class="submit-button">Post Comment</button>
+                </form>
+            {% else %}
+                <p class="login-prompt">Please <a href="{{ url_for('login') }}">log in</a> to post a comment.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
