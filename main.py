@@ -9,13 +9,14 @@ from forms import FindMovieForm, LoginForm, SignUpForm, PostCommentForm
 from flask_ckeditor import CKEditor
 from os import getenv
 from datetime import date
+from psycopg2 import *
 import requests
 
 
 # APP & KEYS
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///movies.db"
+app.config['SQLALCHEMY_DATABASE_URI'] = getenv("DB_URI")
 app.config['SECRET_KEY'] = getenv("SECRET_KEY")
 
 API_KEY = getenv('API_KEY')
@@ -59,7 +60,7 @@ class Movie(db.Model):
     description: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     contributor_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('users.id'), nullable=False)
     contributor = relationship("User", back_populates="movies_added")
-    comments = relationship('Comment', back_populates='parent_movie')  # Remove Mapped[str]
+    comments = relationship('Comment', back_populates='parent_movie', cascade="all, delete-orphan")  # Remove Mapped[str]
     
     @property
     def average_rating(self):
@@ -78,6 +79,9 @@ class Comment(db.Model):
     text: Mapped[str] = mapped_column(String, nullable=False)
     rating: Mapped[int] = mapped_column(Integer(), nullable=True)
 
+# with app.app_context():
+#     db.create_all()
+
 # ROUTES
 
 @app.route("/")
@@ -86,6 +90,7 @@ def home():
     return render_template('index.html', movies=movies, current_user=current_user)
 
 @app.route("/add", methods=["POST", "GET"])
+@login_required
 def add_movie():
     find_movie_form = FindMovieForm()
     if request.method=="POST" and find_movie_form.validate_on_submit():
@@ -116,8 +121,9 @@ def select():
     return redirect(url_for('home'))
 
 @app.route('/delete/<movie_id>')
+@login_required
 def delete(movie_id):
-    selected_movie = db.session.execute(db.select('Movie').where(Movie.id==movie_id)).scalar()
+    selected_movie = db.session.execute(db.select(Movie).where(Movie.id==movie_id)).scalar()
     db.session.delete(selected_movie)
     db.session.commit()
     return redirect(url_for('home'))
